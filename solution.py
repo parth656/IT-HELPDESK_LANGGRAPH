@@ -115,7 +115,13 @@ def validate_reply(state: HelpdeskState):
 
 def improve_reply(state: HelpdeskState):
     # TODO: rewrite using review_notes and increment revision_count
-    pass
+    llm = get_llm()
+    prompt = f"""You are given {state['reply']} Improve it acc to  {state["review_notes"]}  Give the final revised notes"""
+    response = llm.invoke(prompt)
+    return {
+        "review_notes": response.content[0][-1],
+        "revision_count": state["revision_count"] + 1,
+    }
 
 
 def route_after_validation(state: HelpdeskState):
@@ -137,10 +143,7 @@ def build_graph():
     graph.add_conditional_edges(
         "validate_reply",
         route_after_validation,
-        {
-            "need_improve": "improve_reply",
-            "end": END
-        },
+        {"need_improve": "improve_reply", "end": END},
     )
     graph.add_edge("validate_reply", END)
 
